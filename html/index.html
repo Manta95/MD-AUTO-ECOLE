@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto-École</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css?v=2">
+</head>
+
+<body style="display: none;">
+
+    <!-- ===== ÉCRAN 1 : SÉLECTION DU PERMIS ===== -->
+    <div id="menu-screen" class="glass-container">
+        <header class="header">
+            <div class="header-icon"><i class="fas fa-graduation-cap"></i></div>
+            <h1>Auto-École</h1>
+            <p>Choisissez votre formation et passez votre permis de conduire</p>
+        </header>
+
+        <main class="cards-wrapper">
+            <div class="card" data-type="voiture">
+                <div class="card-image placeholder-voiture"></div>
+                <div class="card-content">
+                    <div class="card-icon"><i class="fas fa-car"></i></div>
+                    <h2>Permis Voiture</h2>
+                    <p class="category">Catégorie B</p>
+                    <p class="card-desc">Conduisez des véhicules légers en toute légalité sur l'ensemble du réseau
+                        routier.</p>
+                    <div class="card-footer">
+                        <span class="card-price">500$</span>
+                        <button class="btn-select">Passer le permis <i class="fas fa-arrow-right"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" data-type="moto">
+                <div class="card-image placeholder-moto"></div>
+                <div class="card-content">
+                    <div class="card-icon"><i class="fas fa-motorcycle"></i></div>
+                    <h2>Permis Moto</h2>
+                    <p class="category">Catégorie A / A1 / A2</p>
+                    <p class="card-desc">Pilotez tous types de deux-roues motorisés sur toutes les routes.</p>
+                    <div class="card-footer">
+                        <span class="card-price">750$</span>
+                        <button class="btn-select">Passer le permis <i class="fas fa-arrow-right"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" data-type="camion">
+                <div class="card-image placeholder-camion"></div>
+                <div class="card-content">
+                    <div class="card-icon"><i class="fas fa-truck"></i></div>
+                    <h2>Permis Camion</h2>
+                    <p class="category">Catégorie C / CE</p>
+                    <p class="card-desc">Transportez des marchandises avec des poids lourds et semi-remorques.</p>
+                    <div class="card-footer">
+                        <span class="card-price">1 500$</span>
+                        <button class="btn-select">Passer le permis <i class="fas fa-arrow-right"></i></button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ===== ÉCRAN 2 : EXAMEN THÉORIQUE ===== -->
+    <div id="quiz-screen" class="glass-container quiz-container" style="display: none;">
+
+        <!-- Top bar -->
+        <div class="quiz-topbar">
+            <div class="quiz-topbar-left">
+                <span class="quiz-badge" id="quiz-badge">PERMIS B</span>
+                <span class="quiz-title">Examen Théorique</span>
+            </div>
+            <div class="quiz-topbar-right">
+                <div class="quiz-timer" id="quiz-timer">
+                    <i class="far fa-clock"></i>
+                    <span id="timer-text">02:00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Question dots -->
+        <div class="quiz-dots" id="quiz-dots"></div>
+
+        <!-- Score counters -->
+        <div class="quiz-counters">
+            <div class="counter counter-correct">
+                <i class="fas fa-check"></i>
+                <span id="counter-correct">0</span>
+            </div>
+            <div class="counter counter-wrong">
+                <i class="fas fa-times"></i>
+                <span id="counter-wrong">0</span>
+            </div>
+            <div class="counter counter-progress">
+                <span id="quiz-progress-text">1 / 10</span>
+            </div>
+        </div>
+
+        <!-- Question -->
+        <div class="quiz-body">
+            <div class="quiz-question-card">
+                <div class="quiz-question-number" id="quiz-question-number">Q1</div>
+                <div class="quiz-question" id="quiz-question">
+                    Quelle est la vitesse maximale autorisée en agglomération ?
+                </div>
+            </div>
+
+            <div class="quiz-answers" id="quiz-answers">
+                <button class="quiz-answer" data-index="0">
+                    <span class="answer-letter">A</span>
+                    <span class="answer-text">30 km/h</span>
+                    <span class="answer-icon"></span>
+                </button>
+                <button class="quiz-answer" data-index="1">
+                    <span class="answer-letter">B</span>
+                    <span class="answer-text">50 km/h</span>
+                    <span class="answer-icon"></span>
+                </button>
+                <button class="quiz-answer" data-index="2">
+                    <span class="answer-letter">C</span>
+                    <span class="answer-text">70 km/h</span>
+                    <span class="answer-icon"></span>
+                </button>
+                <button class="quiz-answer" data-index="3">
+                    <span class="answer-letter">D</span>
+                    <span class="answer-text">90 km/h</span>
+                    <span class="answer-icon"></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="quiz-footer">
+            <button class="quiz-btn-back" id="quiz-back"><i class="fas fa-arrow-left"></i> Abandonner</button>
+        </div>
+    </div>
+
+    <!-- ===== ÉCRAN 3 : RÉSULTATS ===== -->
+    <div id="result-screen" class="glass-container result-container" style="display: none;">
+        <div class="result-content">
+            <div class="result-icon" id="result-icon"><i class="fas fa-check"></i></div>
+            <h2 class="result-title" id="result-title">Examen Réussi !</h2>
+            <p class="result-subtitle" id="result-subtitle">Félicitations, vous pouvez passer l'examen pratique.</p>
+
+            <div class="result-stats">
+                <div class="stat">
+                    <span class="stat-value" id="stat-correct">8</span>
+                    <span class="stat-label">Correctes</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat">
+                    <span class="stat-value stat-value-red" id="stat-wrong">2</span>
+                    <span class="stat-label">Erreurs</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat">
+                    <span class="stat-value" id="stat-score">80%</span>
+                    <span class="stat-label">Score</span>
+                </div>
+            </div>
+
+            <div class="result-actions">
+                <button class="result-btn result-btn-primary" id="result-continue"><i class="fas fa-car"></i> Passer
+                    l'examen pratique</button>
+                <button class="result-btn result-btn-secondary" id="result-close">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
