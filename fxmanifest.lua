@@ -25,6 +25,5 @@ server_scripts {
 }
 
 dependencies {
-    'es_extended',
-    'mysql-async'
+    'es_extended'
 }
