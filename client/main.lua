@@ -13,6 +13,7 @@ local currentInstructor = nil
 local currentCheckpoint = 1
 local errors = 0
 local quizPassed = {} -- Track which license types have passed the quiz
+local purchaseInProgress = false -- Empêche de lancer deux demandes d'examen en parallèle
 
 function CreateQuizCamera()
     local ped = PlayerPedId()
@@ -132,6 +133,28 @@ RegisterNUICallback("quizEnd", function(data, cb)
     cb("ok")
 end)
 
+function RequestStartExam(pType)
+    if inTest or purchaseInProgress then return end
+    purchaseInProgress = true
+
+    ESX.TriggerServerCallback('md_autoecole:hasLicense', function(hasLicense)
+        if hasLicense then
+            ESX.ShowNotification("Vous avez déjà ce permis !")
+            purchaseInProgress = false
+        else
+            ESX.TriggerServerCallback('md_autoecole:checkMoney', function(hasMoney)
+                if hasMoney then
+                    StartTest(pType)
+                else
+                    local price = Config.Prices[pType] or 500
+                    ESX.ShowNotification("Vous n'avez pas assez d'argent ($" .. price .. ").")
+                end
+                purchaseInProgress = false
+            end, pType)
+        end
+    end, pType)
+end
+
 RegisterNUICallback("action", function(data, cb)
     if data.action == "close" then
         SetDisplay(false)
@@ -139,22 +162,9 @@ RegisterNUICallback("action", function(data, cb)
     elseif data.action == "select" then
         SetDisplay(false)
         local pType = data.type
-        
+
         if pType == "voiture" or pType == "moto" or pType == "camion" then
-            ESX.TriggerServerCallback('md_autoecole:hasLicense', function(hasLicense)
-                if hasLicense then
-                    ESX.ShowNotification("Vous avez déjà ce permis !")
-                else
-                    ESX.TriggerServerCallback('md_autoecole:checkMoney', function(hasMoney)
-                        if hasMoney then
-                            StartTest(pType)
-                        else
-                            local price = Config.Prices[pType] or 500
-                            ESX.ShowNotification("Vous n'avez pas assez d'argent ($" .. price .. ").")
-                        end
-                    end, pType)
-                end
-            end, pType)
+            RequestStartExam(pType)
         end
         cb("ok")
     elseif data.action == "quizResult" then
@@ -172,37 +182,36 @@ RegisterNUICallback("action", function(data, cb)
         SetDisplay(false)
         local pType = data.type
         if pType and quizPassed[pType] then
-            ESX.TriggerServerCallback('md_autoecole:hasLicense', function(hasLicense)
-                if hasLicense then
-                    ESX.ShowNotification("Vous avez déjà ce permis !")
-                else
-                    ESX.TriggerServerCallback('md_autoecole:checkMoney', function(hasMoney)
-                        if hasMoney then
-                            StartTest(pType)
-                        else
-                            local price = Config.Prices[pType] or 500
-                            ESX.ShowNotification("Vous n'avez pas assez d'argent ($" .. price .. ").")
-                        end
-                    end, pType)
-                end
-            end, pType)
+            RequestStartExam(pType)
         end
         cb("ok")
     end
 end)
 
 function StartTest(type)
+    if inTest then return end
+
+    local vehicleModel = Config.Vehicles[type]
+    if not vehicleModel then
+        ESX.ShowNotification("Erreur: véhicule d'examen introuvable.")
+        return
+    end
+
     inTest = true
     currentTestType = type
     currentCheckpoint = 1
     errors = 0
-    
-    local vehicleModel = Config.Vehicles[type]
+
     RequestModel(vehicleModel)
     while not HasModelLoaded(vehicleModel) do Wait(10) end
-    
+
+    -- Décale le point de spawn par joueur pour éviter que deux véhicules
+    -- se superposent si plusieurs examens démarrent en même temps
     local spawn = Config.SpawnPoint
-    currentVehicle = CreateVehicle(vehicleModel, spawn.x, spawn.y, spawn.z, spawn.w, true, false)
+    local offsetAngle = math.rad((GetPlayerServerId(PlayerId()) % 8) * 45.0)
+    local spawnX = spawn.x + math.cos(offsetAngle) * 6.0
+    local spawnY = spawn.y + math.sin(offsetAngle) * 6.0
+    currentVehicle = CreateVehicle(vehicleModel, spawnX, spawnY, spawn.z, spawn.w, true, true)
     
     -- Cinematic Enter
     Citizen.CreateThread(function()
@@ -382,5 +391,24 @@ Citizen.CreateThread(function()
         BeginTextCommandSetBlipName("STRING")
         AddTextComponentString(Config.Blip.name)
         EndTextCommandSetBlipName(blip)
+    end
+end)
+
+-- Nettoyage des entités si la resource est stoppée/redémarrée en cours d'utilisation
+AddEventHandler('onResourceStop', function(resourceName)
+    if GetCurrentResourceName() ~= resourceName then return end
+
+    DestroyQuizCamera()
+
+    if schoolPed and DoesEntityExist(schoolPed) then
+        DeletePed(schoolPed)
+    end
+
+    if currentVehicle and DoesEntityExist(currentVehicle) then
+        DeleteVehicle(currentVehicle)
+    end
+
+    if currentInstructor and DoesEntityExist(currentInstructor) then
+        DeletePed(currentInstructor)
     end
 end)
