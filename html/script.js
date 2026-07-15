@@ -16,6 +16,9 @@ document.addEventListener("DOMContentLoaded", () => {
     let timeLeft = TIME_PER_EXAM;
     let selectedType = null;
     let quizPassedTypes = {}; // Types de quiz déjà réussis
+    let quizFinished = false; // Empêche finishQuiz() de s'exécuter deux fois (course timer / dernière réponse)
+    let advanceTimeout = null; // Timeout en attente entre deux questions
+    let cardActionInProgress = false; // Anti double-clic sur les cartes du menu
 
     // ============================================================
     // DOM REFS
@@ -60,6 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (item.quizPassed) {
                 quizPassedTypes = item.quizPassed;
             }
+            cardActionInProgress = false;
             showScreen("menu");
             document.body.style.display = "flex";
         } else if (item.action === "closeMenu") {
@@ -73,9 +77,15 @@ document.addEventListener("DOMContentLoaded", () => {
     // ============================================================
     document.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
+            quizFinished = true;
+            if (advanceTimeout) {
+                clearTimeout(advanceTimeout);
+                advanceTimeout = null;
+            }
             stopTimer();
             sendNUI({ action: "quizEnd" });
             sendNUI({ action: "close" });
+            cardActionInProgress = false;
             document.body.style.display = "none";
         }
     });
@@ -85,6 +95,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // ============================================================
     document.querySelectorAll(".card").forEach(card => {
         card.addEventListener("click", () => {
+            if (cardActionInProgress) return;
+            cardActionInProgress = true;
+
             selectedType = card.getAttribute("data-type");
             if (quizPassedTypes[selectedType]) {
                 // Quiz déjà réussi → lancer directement l'examen pratique
@@ -100,8 +113,14 @@ document.addEventListener("DOMContentLoaded", () => {
     // CLOSE / BACK
     // ============================================================
     document.getElementById("quiz-back").addEventListener("click", () => {
+        quizFinished = true;
+        if (advanceTimeout) {
+            clearTimeout(advanceTimeout);
+            advanceTimeout = null;
+        }
         stopTimer();
         sendNUI({ action: "quizEnd" });
+        cardActionInProgress = false;
         showScreen("menu");
     });
 
@@ -120,16 +139,29 @@ document.addEventListener("DOMContentLoaded", () => {
     // ============================================================
     // QUIZ LOGIC
     // ============================================================
+    function shuffleQuestions(list) {
+        const arr = [...list];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
     function startQuiz(type) {
         const badges = { voiture: "PERMIS B", moto: "PERMIS A", camion: "PERMIS C" };
         quizBadge.textContent = badges[type] || "PERMIS";
 
-        const shuffled = [...allQuestions].sort(() => Math.random() - 0.5);
-        currentQuestions = shuffled.slice(0, QUESTIONS_PER_EXAM);
+        currentQuestions = shuffleQuestions(allQuestions).slice(0, QUESTIONS_PER_EXAM);
         currentIndex = 0;
         score = 0;
         wrongCount = 0;
         timeLeft = TIME_PER_EXAM;
+        quizFinished = false;
+        if (advanceTimeout) {
+            clearTimeout(advanceTimeout);
+            advanceTimeout = null;
+        }
 
         // Generate dots
         quizDots.innerHTML = "";
@@ -199,7 +231,9 @@ document.addEventListener("DOMContentLoaded", () => {
             if (dots[currentIndex]) dots[currentIndex].className = "quiz-dot wrong";
         }
 
-        setTimeout(() => {
+        advanceTimeout = setTimeout(() => {
+            advanceTimeout = null;
+            if (quizFinished) return;
             currentIndex++;
             if (currentIndex >= QUESTIONS_PER_EXAM) {
                 finishQuiz();
@@ -211,6 +245,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function finishQuiz() {
+        if (quizFinished) return;
+        quizFinished = true;
+        if (advanceTimeout) {
+            clearTimeout(advanceTimeout);
+            advanceTimeout = null;
+        }
         stopTimer();
         const passed = score >= PASS_THRESHOLD;
         const pct = Math.round((score / QUESTIONS_PER_EXAM) * 100);
@@ -223,7 +263,7 @@ document.addEventListener("DOMContentLoaded", () => {
             : "Vous n'avez pas obtenu le score minimum. Réessayez !";
 
         statCorrect.textContent = score;
-        statWrong.textContent = QUESTIONS_PER_EXAM - score;
+        statWrong.textContent = wrongCount;
         statScore.textContent = pct + "%";
 
         const continueBtn = document.getElementById("result-continue");
