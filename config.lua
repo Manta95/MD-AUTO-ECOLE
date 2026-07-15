@@ -67,11 +67,6 @@ Config.DamageFail = {
     minHealth = 800.0 -- (Max 1000) Si la santé de la voiture descend sous ce seuil, c'est un échec immédiat.
 }
 
-Config.SpeedLimits = {
-    town     = 50,
-    freeway  = 120
-}
-
 Config.SpawnPoint = {x = 227.99975585938, y = -1392.6203613281, z = 30.509635925293, w = 213.07221984863}
 
 Config.Checkpoints = {
